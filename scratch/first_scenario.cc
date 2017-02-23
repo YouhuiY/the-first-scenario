@@ -170,6 +170,8 @@ int main (int argc, char *argv[])
     int totalSta = DC_nsta + DT_nsta;
     int portBase = 9000;
     idx = 0;
+     /*
+    *******************************************************************************************************************************************
     for (int s = 0; s < totalSta; s++)
     {
     	UdpServerHelper myServer (portBase + idx);
@@ -178,10 +180,17 @@ int main (int argc, char *argv[])
         server.Stop (Seconds (simulationTime + 1));
         serverApps.Add (server);
     }
-    idx = 0;
+    *****************************************************************************************************************************
+    idx = 0;*/
+    
+    UdpServerHelper myServer (portBase + idx);
+    ApplicationContainer server = myServer.Install (wifiApNode.Get (0));
+    server.Start (Seconds (0.0));
+    server.Stop (Seconds (simulationTime + 1));
+    serverApps.Add (server);
     for(int s = 0; s < DC_nsta; s++)
     {
-        UdpClientHelper myClient (apNodeInterface.GetAddress (0), (portBase + idx));
+        UdpClientHelper myClient (apNodeInterface.GetAddress (0), (portBase));
         myClient.SetAttribute ("MaxPackets", UintegerValue (4294967295u));
         myClient.SetAttribute ("Interval", TimeValue (Time ("0.0000001"))); //packets/s
         myClient.SetAttribute ("PacketSize", UintegerValue (payloadSize));
@@ -200,7 +209,7 @@ int main (int argc, char *argv[])
 
     for(int s = 0; s < DT_nsta; s++)
     {
-        UdpClientHelper myClient (apNodeInterface.GetAddress (0), (portBase + idx));
+        UdpClientHelper myClient (apNodeInterface.GetAddress (0), (portBase));
         myClient.SetAttribute ("MaxPackets", UintegerValue (4294967295u));
         myClient.SetAttribute ("Interval", TimeValue (Time ("0.0000001"))); //packets/s
         myClient.SetAttribute ("PacketSize", UintegerValue (payloadSize));
@@ -238,4 +247,5 @@ int main (int argc, char *argv[])
 */
     return 0;
 }
+
 
