@@ -2,6 +2,9 @@
 different nodes numbers
 */
 
+/*version2 add csma
+*/
+
 
 
 #include "ns3/core-module.h"
@@ -11,8 +14,12 @@ different nodes numbers
 #include "ns3/mobility-module.h"
 #include "ns3/ipv4-global-routing-helper.h"
 #include "ns3/internet-module.h"
+#include "ns3/csma-module.h"
+#include "ns3/bridge-helper.h"
 #include <assert.h> 
 #include <set>
+#include <fstream>
+#include <iostream>
 
 using namespace ns3;
 
@@ -20,14 +27,14 @@ NS_LOG_COMPONENT_DEFINE ("first scenario");
 
 int main (int argc, char *argv[])
 {
-	double simulationTime = 1; //seconds
+	double simulationTime = 5; //seconds
 
 	int mcs = 5;
     int channelWidth = 80;
     int gi = 1; //Guard Interval
 
-    int DC_nsta = 3; //number of delay-critical stations
-    int DT_nsta = 1; //number of delay-tolerant stations
+    int DC_nsta = 10; //number of delay-critical stations
+    int DT_nsta = 100; //number of delay-tolerant stations
 
     CommandLine cmd;
 
@@ -41,6 +48,9 @@ int main (int argc, char *argv[])
     cmd.AddValue ("DT_nsta", "Number of delay-tolerant stations per AP", DT_nsta);
 
     cmd.Parse (argc,argv);
+
+    Time::SetResolution (Time::NS);
+    LogComponentEnable ("first scenario", LOG_LEVEL_INFO);
 
     if (simulationTime <= 0)
     {
@@ -90,6 +100,15 @@ int main (int argc, char *argv[])
     DTStaNodes.Create (DT_nsta);
     NodeContainer wifiApNode;
     wifiApNode.Create (1);
+    NodeContainer csmaNodes;
+    csmaNodes.Create(1);
+    csmaNodes.Add(wifiApNode.Get(0));
+    NetDeviceContainer csmaDevices;
+    Ipv4InterfaceContainer csmaInterfaces;
+
+
+
+
 
     YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
     YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
@@ -141,6 +160,13 @@ int main (int argc, char *argv[])
     stack.Install (wifiApNode);
     stack.Install (DCStaNodes);
     stack.Install (DTStaNodes);
+    stack.Install (csmaNodes.Get(0));
+
+
+    CsmaHelper csma;
+    csmaDevices = csma.Install (csmaNodes);//
+
+
 
 
     Ipv4AddressHelper address;
@@ -150,7 +176,15 @@ int main (int argc, char *argv[])
     Ipv4InterfaceContainer DCstaNodeInterface;
     Ipv4InterfaceContainer DTstaNodeInterface;
 
-    apNodeInterface.Add (address.Assign (apDevice.Get (0)));
+    csmaInterfaces.Add(address.Assign(csmaDevices.Get(0)));
+
+    BridgeHelper bridge;
+    NetDeviceContainer bridgeDev;
+    bridgeDev = bridge.Install (csmaNodes.Get (1), NetDeviceContainer (apDevice, csmaDevices.Get (1)));
+    apNodeInterface = address.Assign (bridgeDev);
+
+    //apNodeInterface.Add (address.Assign (apDevice.Get (0)));
+    
 
     int idx = 0;
     for (int s = 0; s < DC_nsta; s++)
@@ -170,8 +204,8 @@ int main (int argc, char *argv[])
     int totalSta = DC_nsta + DT_nsta;
     int portBase = 9000;
     idx = 0;
-     /*
-    *******************************************************************************************************************************************
+
+
     for (int s = 0; s < totalSta; s++)
     {
     	UdpServerHelper myServer (portBase + idx);
@@ -179,23 +213,17 @@ int main (int argc, char *argv[])
         server.Start (Seconds (0.0));
         server.Stop (Seconds (simulationTime + 1));
         serverApps.Add (server);
+        idx++;
     }
-    *****************************************************************************************************************************
-    idx = 0;*/
-    
-    UdpServerHelper myServer (portBase + idx);
-    ApplicationContainer server = myServer.Install (wifiApNode.Get (0));
-    server.Start (Seconds (0.0));
-    server.Stop (Seconds (simulationTime + 1));
-    serverApps.Add (server);
+    idx = 0;
     for(int s = 0; s < DC_nsta; s++)
     {
-        UdpClientHelper myClient (apNodeInterface.GetAddress (0), (portBase));
+        UdpClientHelper myClient (apNodeInterface.GetAddress (0), (portBase + idx));
         myClient.SetAttribute ("MaxPackets", UintegerValue (4294967295u));
         myClient.SetAttribute ("Interval", TimeValue (Time ("0.0000001"))); //packets/s
         myClient.SetAttribute ("PacketSize", UintegerValue (payloadSize));
         ApplicationContainer client = myClient.Install (DCStaNodes.Get (idx));
-        printf("%d\n", s);
+        //printf("%d\n", s);
         
         client.Start (Seconds (1.0));
         client.Stop (Seconds (simulationTime + 1));
@@ -209,7 +237,7 @@ int main (int argc, char *argv[])
 
     for(int s = 0; s < DT_nsta; s++)
     {
-        UdpClientHelper myClient (apNodeInterface.GetAddress (0), (portBase));
+        UdpClientHelper myClient (apNodeInterface.GetAddress (0), (portBase + idx));
         myClient.SetAttribute ("MaxPackets", UintegerValue (4294967295u));
         myClient.SetAttribute ("Interval", TimeValue (Time ("0.0000001"))); //packets/s
         myClient.SetAttribute ("PacketSize", UintegerValue (payloadSize));
@@ -217,21 +245,22 @@ int main (int argc, char *argv[])
         client.Start (Seconds (1.0));
         client.Stop (Seconds (simulationTime + 1));
         clientApps.Add (client);
-        printf("%d\n", s);
+        //printf("%d\n", s);
         idx ++;
     }
-    printf("out\n");
+    //printf("out\n");
     assert (idx == DTstaNodeInterface.GetN () +  DCstaNodeInterface.GetN ());
-    printf("out\n");
+    //printf("out\n");
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
     Simulator::Stop (Seconds (simulationTime + 1));
-    printf("out\n");
+    //printf("out\n");
 
     Simulator::Run ();
-    printf("out\n");
+   // printf("out\n");
     Simulator::Destroy ();
-/*
+
     int T = 0; 
+    idx = 0;
     for (int s = 0; s < totalSta; s++)
     { 
         double throughput = 0;
@@ -244,8 +273,18 @@ int main (int argc, char *argv[])
         T += throughput;
     }
     std::cout << "\t the total throughput: " << T << " Mbps" << std::endl;
-*/
+    std::ofstream outData;
+    outData.open("/home/youhui/Downloads/ns-allinone-3.26/ns-3.26/first_scenario.dat");
+    if (!outData)
+    {
+    	std::cout <<"can not open the file"<< std::endl;
+    }
+    else
+    {
+    	outData << "\t the total throughput: " << T << " Mbps" << std::endl;
+    	outData.close();
+    }
+
     return 0;
 }
-
 
