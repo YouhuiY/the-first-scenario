@@ -281,7 +281,7 @@ int main (int argc, char *argv[])
     }
     else
     {
-    	outData << "\t the total throughput: " << T << " Mbps" << std::endl;
+    	outData <<DC_nsta<<"\t"<<DT_nsta<<"\t" << T << std::endl;
     	outData.close();
     }
 
