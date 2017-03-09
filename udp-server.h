@@ -36,8 +36,7 @@ struct IP_DELAY
 {
      Ipv4Address ip;
      Time m_delay;
-}
-
+};
 namespace ns3 {
 /**
  * \ingroup applications
