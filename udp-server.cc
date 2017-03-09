@@ -4,7 +4,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation;
+ * published by the Free Software ;
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -59,6 +59,8 @@ UdpServer::GetTypeId (void)
                    MakeUintegerAccessor (&UdpServer::GetPacketWindowSize,
                                          &UdpServer::SetPacketWindowSize),
                    MakeUintegerChecker<uint16_t> (8,256))
+    .AddTraceSourse ("Delay", "Ip of of sender", MakeTraceSourceAccessor (&UdpServer::i_d),
+                     "ns3::Traced::Value::TracedDelay")
   ;
   return tid;
 }
@@ -172,6 +174,9 @@ UdpServer::HandleRead (Ptr<Socket> socket)
                            " TXtime: " << seqTs.GetTs () <<
                            " RXtime: " << Simulator::Now () <<
                            " Delay: " << Simulator::Now () - seqTs.GetTs ());
+              //updating
+              i_d.m_delay = Simulator::Now() - seqTs.GetTs();
+              i_d.ip = seqTs.GetIpv4;
             }
           else if (Inet6SocketAddress::IsMatchingType (from))
             {
