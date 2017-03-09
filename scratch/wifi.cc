@@ -13,8 +13,29 @@
 
 using namespace ns3;
 
-NS_LOG_COMPONENT_DEFINE ("before_change");
+NS_LOG_COMPONENT_DEFINE ("before_change"); 
 
+struct Number_hits
+{
+  double hits = 0.0;
+};
+struct Number_hits Hits;
+void TracedDelay (struct Number_hits *Hits, struct IP_DELAY oldValue, struct IP_DELAY newValue)
+{
+    std::ofstream outData;
+    outData.open("/home/youhui/Downloads/ns-allinone-3.26/ns-3.26/scratch/delay-0.dat", std::ios::app);
+    if (!outData)
+    {
+      std::cout <<"can not open the file"<< std::endl;
+    }
+    else
+    {
+      outData <<newValue.ip<"\t"<<newVallue.m_delay.GetMilliSeconds() << std::endl;
+      outData.close();
+    }
+  Hits.hits++;
+}
+ 
 int main (int argc, char *argv[])
 {
   double simulationTime = 60; //seconds
@@ -208,7 +229,9 @@ int main (int argc, char *argv[])
 
   
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
-
+    
+    Ptr<UdpServer> server = DynamicCast<UdpServer> (serverApp.Get(0));
+    server->TraceConnectWithoutContexr ("Delay", MakeBoundCallback (&TracedDelay, &Hits));
     for( int u = 0; u < 20; u ++)
     {
       Simulator::Stop (Seconds (simulationTime + 1));
