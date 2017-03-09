@@ -17,14 +17,14 @@ NS_LOG_COMPONENT_DEFINE ("before_change");
 
 int main (int argc, char *argv[])
 {
-  double simulationTime = 5; //seconds
+  double simulationTime = 60; //seconds
 
   int mcs = 9;
   int channelWidth = 160;
   int gi = 1; //Guard Interval
 
-  int DC_nsta = 5096; //number of delay-critical stations
-  int DT_nsta = 5096; //number of delay-tolerant stations
+  int DC_nsta = 64; //number of delay-critical stations
+  int DT_nsta = 64; //number of delay-tolerant stations
 
   uint32_t payloadSize = 1472; 
   double distance = 1.0; //meters
@@ -78,12 +78,12 @@ int main (int argc, char *argv[])
     
   if (DC_nsta <= 0)
   {
-    DC_nsta = 5096;
+    DC_nsta = 64;
     std::cout<<" Invalid input, DC_nsta set to 10"<<std::endl;
   }
   if(DT_nsta <= 0)
   {
-    DT_nsta = 5096;
+    DT_nsta = 64;
     std::cout<<" Invalid input, DT_nsta set to 100"<<std::endl;
   }
 
@@ -209,7 +209,7 @@ int main (int argc, char *argv[])
   
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
-    for( int u = 0; u < 3; u ++)
+    for( int u = 0; u < 20; u ++)
     {
       Simulator::Stop (Seconds (simulationTime + 1));
       Simulator::Run ();
@@ -221,9 +221,9 @@ int main (int argc, char *argv[])
     std::cout<<totalPacketsThrough<<std::endl;
     uint64_t m = totalPacketsThrough*8*payloadSize;
     std::cout<<m<<std::endl;
-    int n = simulationTime*1000000.0; 
+    uint32_t n = simulationTime*1000000.0; 
     std::cout<<n<<std::endl;
-    T = m / n / 3; //Mbit/s
+    T = m / n / 20.0; //Mbit/s
 
     std::ofstream outData;
     outData.open("/home/youhui/Downloads/ns-allinone-3.26/ns-3.26/scratch/wifi.dat", std::ios::app);
