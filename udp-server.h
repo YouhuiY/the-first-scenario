@@ -89,7 +89,7 @@ public:
   void SetPacketWindowSize (uint16_t size);
   
   // trace source definitoin
-  typedef void (* TraceDalay) (Time *delay_old, Time *delay_new); 
+  typedef void (* TraceDalay) (struct IP_DELAY *delay_old, struct IP_DELAY *delay_new); 
 protected:
   virtual void DoDispose (void);
 
