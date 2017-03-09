@@ -112,7 +112,7 @@ private:
   Ptr<Socket> m_socket6; //!< IPv6 Socket
   uint64_t m_received; //!< Number of received packets
   PacketLossCounter m_lossCounter; //!< Lost packet counter
-  TracedValue<IP_DELAY> i_d; //trace the delay and ip of the sender
+  TracedValue<struct IP_DELAY> i_d; //trace the delay and ip of the sender
   
 };
 
