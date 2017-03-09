@@ -94,7 +94,7 @@ int main (int argc, char *argv[])
 
   }
 
-  for(int v = 1; v <= DC_nsta; v*=2)
+  for(int v = 1; v <= DC_nsta; v+=2)
   {
 
     NodeContainer DCStaNodes;
