@@ -28,15 +28,10 @@
 #include "ns3/ptr.h"
 #include "ns3/address.h"
 #include "packet-loss-counter.h"
-// Add the capability of functioning as a trace source
+
+// add the head files for trace
 #include "ns3/traced-value.h"
 #include "ns3/trace-source-accessor.h"
-
-struct IP_DELAY
-{
-     Ipv4Address ip;
-     Time m_delay;
-};
 namespace ns3 {
 /**
  * \ingroup applications
@@ -87,9 +82,14 @@ public:
    *  be a multiple of 8
    */
   void SetPacketWindowSize (uint16_t size);
-  
-  // trace source definitoin
-  typedef void (* TraceDalay) (struct IP_DELAY *delay_old, struct IP_DELAY *delay_new); 
+
+  // define DC devices' delay trace source
+  typedef void (* DC_Delay) (Time *dc_delay_old, Time *dc_delay_new);
+  //define DT devices' delay trace source
+  typedef void (* DT_Delay) (Time *dT_delay_old, Time *dT_delay_new);
+
+
+
 protected:
   virtual void DoDispose (void);
 
@@ -112,8 +112,12 @@ private:
   Ptr<Socket> m_socket6; //!< IPv6 Socket
   uint64_t m_received; //!< Number of received packets
   PacketLossCounter m_lossCounter; //!< Lost packet counter
-  TracedValue<struct IP_DELAY> i_d; //trace the delay and ip of the sender
-  
+
+//define trace value for DC devices' delay
+  TracedValue<Time> DCDelay;
+//define trace value for DT devices' delay
+  TracedValue<Time> DTDelay;
+
 };
 
 } // namespace ns3

@@ -4,7 +4,7 @@
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software ;
+ * published by the Free Software Foundation;
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -34,6 +34,9 @@
 #include "seq-ts-header.h"
 #include "udp-server.h"
 
+//my includes
+#include "/home/youhui/Downloads/ns-allinone-3.26/ns-3.26/includes/aux.hh"
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("UdpServer");
@@ -59,8 +62,12 @@ UdpServer::GetTypeId (void)
                    MakeUintegerAccessor (&UdpServer::GetPacketWindowSize,
                                          &UdpServer::SetPacketWindowSize),
                    MakeUintegerChecker<uint16_t> (8,256))
-    .AddTraceSourse ("Delay", "Ip of of sender", MakeTraceSourceAccessor (&UdpServer::i_d),
-                     "ns3::Traced::Value::TracedDelay")
+    .AddTraceSource ("Delay_DC", "Ip of a sender",
+                    MakeTraceSourceAccessor (&UdpServer::DCDelay),
+                    "ns3::Traced::Value::DC_Delay")
+    .AddTraceSource ("Delay_DT", "Ip of a sender",
+                    MakeTraceSourceAccessor (&UdpServer::DTDelay),
+                    "ns3::Traced::Value::DT_Delay")
   ;
   return tid;
 }
@@ -174,9 +181,19 @@ UdpServer::HandleRead (Ptr<Socket> socket)
                            " TXtime: " << seqTs.GetTs () <<
                            " RXtime: " << Simulator::Now () <<
                            " Delay: " << Simulator::Now () - seqTs.GetTs ());
-              //updating
-              i_d.m_delay = Simulator::Now() - seqTs.GetTs();
-              i_d.ip = seqTs.GetIpv4;
+              Ipv4Address ip = InetSocketAddress::ConvertFrom (from).GetIpv4 ();
+//calculate the delay
+              Time temp = Simulator::Now () - seqTs.GetTs ();
+//set the trace value              
+              if(ip.m_address<= DT_up && ip.m_address >= DT_down)
+              {
+                DCDelay = temp;
+              }
+
+              if(ip.m_address<= DT_up && ip.m_address >= DT_down)
+              {
+                DTDelay = temp;
+              }
             }
           else if (Inet6SocketAddress::IsMatchingType (from))
             {
