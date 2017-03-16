@@ -9,43 +9,50 @@
 #include <set>
 #include <fstream>
 #include <iostream>
+#include <string>
+
+//my includes
+#include "/home/youhui/Downloads/ns-allinone-3.26/ns-3.26/includes/aux.hh"
 
 
 using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("before_change"); 
 
-struct Number_hits
+struct results
 {
-  double hits = 0.0;
+  double hits = 0;  
 };
-struct Number_hits Hits;
-void TracedDelay (struct Number_hits *Hits, struct IP_DELAY oldValue, struct IP_DELAY newValue)
+struct results result;
+
+int v;
+std::ofstream outData;
+// define the trace function
+void DC_Delay (struct results *result, Time oldValue, Time newValue)
 {
-    std::ofstream outData;
-    outData.open("/home/youhui/Downloads/ns-allinone-3.26/ns-3.26/scratch/delay-0.dat", std::ios::app);
-    if (!outData)
-    {
-      std::cout <<"can not open the file"<< std::endl;
-    }
-    else
-    {
-      outData <<newValue.ip<"\t"<<newVallue.m_delay.GetMilliSeconds() << std::endl;
-      outData.close();
-    }
-  Hits.hits++;
+
+  uint64_t temp_new = newValue.GetMilliSeconds ();
+  //outData.open("/home/youhui/Downloads/ns-allinone-3.26/ns-3.26/scratch/delay_0.dat", std::ios::app);
+  DC_DelayTime += temp_new;
+  
+}
+
+void DT_Delay (struct results *result, Time oldValue, Time newValue)
+{
+
+  uint64_t temp_new = newValue.GetMilliSeconds ();
+  DT_DelayTime += temp_new;
+  
 }
  
 int main (int argc, char *argv[])
 {
   double simulationTime = 60; //seconds
-
   int mcs = 9;
   int channelWidth = 160;
   int gi = 1; //Guard Interval
 
-  int DC_nsta = 64; //number of delay-critical stations
-  int DT_nsta = 64; //number of delay-tolerant stations
+ //////////////////////////
 
   uint32_t payloadSize = 1472; 
   double distance = 1.0; //meters
@@ -115,7 +122,7 @@ int main (int argc, char *argv[])
 
   }
 
-  for(int v = 1; v <= DC_nsta; v+=2)
+  for(v = 1; v <= DC_nsta; v+=2)
   {
 
     NodeContainer DCStaNodes;
@@ -188,7 +195,10 @@ int main (int argc, char *argv[])
     Ipv4InterfaceContainer DTstaNodeInterface;
 
     apNodeInterface.Add( address.Assign (apDevice));
-
+    //uint32_t  apint = apNodeInterface.GetAddress(0)//.ConvertTo().m_data();
+   // std::string st = apNodeInterface.GetAddress(0).toString();
+   // std::cout <<"the ap's address is: "<<st<< std::endl;
+   
     int idx = 0;
     for (int s = 0; s < v; s++)
     { 
@@ -202,6 +212,24 @@ int main (int argc, char *argv[])
       DTstaNodeInterface.Add( address.Assign (DT_staDevices.Get (idx)));
       idx ++;
     }
+//uint32_t ni = apNodeInterface.GetAddress(0).ptr;
+/*  ******************** test *********************
+
+std::cout <<apNodeInterface.GetAddress(0).m_address<< std::endl;
+std::cout <<apNodeInterface.GetAddress(0)<< std::endl;
+std::cout <<DCstaNodeInterface.GetAddress(0).m_address<< std::endl;
+std::cout <<DCstaNodeInterface.GetAddress(0)<< std::endl;
+
+*/
+   
+   ap_one = apNodeInterface.GetAddress(0).m_address;
+   DC_down = DCstaNodeInterface.GetAddress(0).m_address;
+   DC_up = DCstaNodeInterface.GetAddress(v - 1).m_address;
+   DT_down = DTstaNodeInterface.GetAddress(0).m_address;
+   DT_up = DTstaNodeInterface.GetAddress(v - 1).m_address;
+   std::cout <<DT_up<< std::endl;
+
+
      // ApplicationContainer serverApp, DC_clientApps, DT_clientApps;
 
     int port = 9000;
@@ -229,10 +257,16 @@ int main (int argc, char *argv[])
 
   
     Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+    // tracer callback function
+    Ptr<UdpServer> server = DynamicCast<UdpServer> (serverApp.Get (0));
+    server->TraceConnectWithoutContext ("Delay_DC", MakeBoundCallback (&DC_Delay, &result));
     
-    Ptr<UdpServer> server = DynamicCast<UdpServer> (serverApp.Get(0));
-    server->TraceConnectWithoutContexr ("Delay", MakeBoundCallback (&TracedDelay, &Hits));
-    for( int u = 0; u < 20; u ++)
+    server->TraceConnectWithoutContext ("Delay_DT", MakeBoundCallback (&DT_Delay, &result));
+
+    
+    //Ptr<UdpServer> server = DynamicCast<UdpServer> (serverApp.Get(0));
+    //server->TraceConnectWithoutContext ("Delay", MakeBoundCallback (&TraceArray));
+    for( int u = 0; u < 1; u ++)
     {
       Simulator::Stop (Seconds (simulationTime + 1));
       Simulator::Run ();
@@ -259,6 +293,21 @@ int main (int argc, char *argv[])
       outData <<v<<"\t"<<v<<"\t" << T << std::endl;
       outData.close();
     }
+
+    //add delay to files
+    std::ofstream delayData;
+    outData.open("/home/youhui/Downloads/ns-allinone-3.26/ns-3.26/scratch/delay_1.dat", std::ios::app);
+    if (!delayData)
+    {
+      std::cout <<"can not open the file"<< std::endl;
+    }
+    else
+    {
+      outData <<v<<"\t"<<DC_DelayTime<<"\t" << DT_DelayTime << std::endl;
+      outData.close();
+    }
+    DT_DelayTime = 0;
+    DC_DelayTime = 0;
 
 }
     
